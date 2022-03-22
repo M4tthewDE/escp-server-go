@@ -97,11 +97,13 @@ func (dbHandler DatabaseHandler) SaveRanking(ranking RankingDto) error {
 // only used for mapping with database.
 type Country struct {
 	Name string
+	Flag string
 }
 
 // use for transfer between database and application.
 type CountryDto struct {
 	Name string
+	Flag string
 }
 
 // only used for mapping with database.
