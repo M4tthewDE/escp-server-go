@@ -17,11 +17,12 @@ func main() {
 	http.HandleFunc("/countries", handler.GetCountries)
 	http.HandleFunc("/result", handler.SetResult)
 	http.HandleFunc("/ranking", handler.SetRanking)
+	http.HandleFunc("/user", handler.GetUser)
 
 	// Determine port for HTTP service.
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "9090"
 		log.Printf("defaulting to port %s", port)
 	}
 

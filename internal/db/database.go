@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	firebase "firebase.google.com/go"
@@ -56,6 +57,36 @@ func (dbHandler DatabaseHandler) GetCountries() ([]CountryDto, error) {
 	}
 
 	return countries, nil
+}
+
+func (dbHandler DatabaseHandler) GetUser(userName string) (*User, error) {
+	ctx := context.Background()
+
+	client, err := dbHandler.app.Firestore(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	defer client.Close()
+
+	var user User
+
+	iter := client.Collection("user").Where("User", "==", userName).Documents(ctx)
+	docs, err := iter.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(docs) == 0 {
+		return nil, errors.New("User not found")
+	}
+
+	err = docs[0].DataTo(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, err
 }
 
 func (dbHandler DatabaseHandler) SaveResult(result ResultDto) error {
@@ -126,4 +157,9 @@ type Ranking struct {
 type RankingDto struct {
 	Name    string
 	Ranking []CountryDto
+}
+
+type User struct {
+	Name string
+	Pass string
 }

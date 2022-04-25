@@ -46,6 +46,31 @@ func (h Handler) GetCountries(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userName := r.URL.Query().Get("user")
+
+	user, err := h.dbHandler.GetUser(userName)
+	if err.Error() == "User not found" {
+		http.Error(w, "User not found", http.StatusNotFound)
+
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(user)
+	if err != nil {
+		http.Error(w, "Could not return user", http.StatusInternalServerError)
+
+		return
+	}
+}
+
 func (h Handler) SetResult(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
