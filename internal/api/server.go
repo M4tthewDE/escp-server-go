@@ -22,6 +22,20 @@ func NewHandler() Handler {
 	return handler
 }
 
+func (h Handler) HandleUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		h.getUser(w, r)
+		return
+	}
+
+	if r.Method == "POST" {
+		h.saveUser(w, r)
+		return
+	}
+
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
 func (h Handler) GetCountries(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -46,13 +60,8 @@ func (h Handler) GetCountries(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
+func (h Handler) getUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 
 	userName := r.URL.Query().Get("user")
 
@@ -66,6 +75,32 @@ func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(user)
 	if err != nil {
 		http.Error(w, "Could not return user", http.StatusInternalServerError)
+
+		return
+	}
+}
+
+func (h Handler) saveUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+
+		return
+	}
+
+	var user db.User
+
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Bad request", http.StatusBadRequest)
+
+		return
+	}
+
+	err = h.dbHandler.SaveUser(user)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Could not save user", http.StatusInternalServerError)
 
 		return
 	}

@@ -89,6 +89,24 @@ func (dbHandler DatabaseHandler) GetUser(userName string) (*User, error) {
 	return &user, err
 }
 
+func (dbHandler DatabaseHandler) SaveUser(user User) error {
+	ctx := context.Background()
+
+	client, err := dbHandler.app.Firestore(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer client.Close()
+
+	_, err = client.Collection("user").NewDoc().Set(ctx, user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (dbHandler DatabaseHandler) SaveResult(result ResultDto) error {
 	ctx := context.Background()
 

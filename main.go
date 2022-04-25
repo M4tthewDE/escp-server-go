@@ -17,7 +17,7 @@ func main() {
 	http.HandleFunc("/countries", handler.GetCountries)
 	http.HandleFunc("/result", handler.SetResult)
 	http.HandleFunc("/ranking", handler.SetRanking)
-	http.HandleFunc("/user", handler.GetUser)
+	http.HandleFunc("/user", handler.HandleUser)
 
 	// Determine port for HTTP service.
 	port := os.Getenv("PORT")
