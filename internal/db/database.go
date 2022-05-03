@@ -71,7 +71,7 @@ func (dbHandler DatabaseHandler) GetUser(userName string) (*User, error) {
 
 	var user User
 
-	iter := client.Collection("user").Where("User", "==", userName).Documents(ctx)
+	iter := client.Collection("user").Where("Name", "==", userName).Documents(ctx)
 	docs, err := iter.GetAll()
 	if err != nil {
 		return nil, err

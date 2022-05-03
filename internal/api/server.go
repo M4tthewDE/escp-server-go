@@ -60,24 +60,47 @@ func (h Handler) GetCountries(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h Handler) getUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+func (h Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 
+		return
+	}
+
+	var user db.User
+
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Bad request", http.StatusBadRequest)
+
+		return
+	}
+
+	savedUser, err := h.dbHandler.GetUser(user.Name)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	if savedUser.Pass == user.Pass {
+		http.Error(w, "Correct pass", http.StatusOK)
+		return
+	}
+
+	http.Error(w, "", http.StatusForbidden)
+}
+
+func (h Handler) getUser(w http.ResponseWriter, r *http.Request) {
 	userName := r.URL.Query().Get("user")
 
-	user, err := h.dbHandler.GetUser(userName)
-	if err.Error() == "User not found" {
-		http.Error(w, "User not found", http.StatusNotFound)
-
-		return
-	}
-
-	err = json.NewEncoder(w).Encode(user)
+	_, err := h.dbHandler.GetUser(userName)
 	if err != nil {
-		http.Error(w, "Could not return user", http.StatusInternalServerError)
-
+		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
+
+	http.Error(w, "User found", http.StatusFound)
 }
 
 func (h Handler) saveUser(w http.ResponseWriter, r *http.Request) {
