@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -133,20 +134,22 @@ func (h Handler) GetRanking(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) HandleLock(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		h.SetLock(w, r)
+	if r.Method == "GET" {
+		h.GetLock(w, r)
 		return
 	}
 
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 }
 
-func (h Handler) SetLock(w http.ResponseWriter, r *http.Request) {
-	err := h.dbHandler.SetLock()
+func (h Handler) GetLock(w http.ResponseWriter, r *http.Request) {
+	lock, err := h.dbHandler.GetLock()
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Could not set lock", http.StatusInternalServerError)
+		http.Error(w, "Could not get lock", http.StatusInternalServerError)
 
 		return
 	}
+
+	fmt.Fprintln(w, lock)
 }

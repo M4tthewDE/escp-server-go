@@ -147,32 +147,32 @@ func (dbHandler DatabaseHandler) GetRanking(user string) (*RankingDto, error) {
 	return &ranking, nil
 }
 
-func (dbHandler DatabaseHandler) SetLock() error {
+func (dbHandler DatabaseHandler) GetLock() (bool, error) {
 	ctx := context.Background()
 
 	client, err := dbHandler.app.Firestore(ctx)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	defer client.Close()
 
 	docs, err := client.Collection("lock").Documents(ctx).GetAll()
 	if err != nil {
-		return nil
+		return false, err
 	}
 
 	if len(docs) == 0 {
-		_, err = client.Collection("lock").NewDoc().Set(ctx, map[string]interface{}{
-			"lock": true,
-		})
-		if err != nil {
-			return err
-		}
-		return nil
+		return false, err
 	}
 
-	return nil
+	var lock Lock
+	err = docs[0].DataTo(&lock)
+	if err != nil {
+		return false, err
+	}
+
+	return lock.Lock, nil
 }
 
 // only used for mapping with database.
@@ -207,4 +207,8 @@ type Ranking struct {
 type RankingDto struct {
 	Name    string
 	Ranking []CountryDto
+}
+
+type Lock struct {
+	Lock bool
 }
