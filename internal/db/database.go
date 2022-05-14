@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"errors"
 	"log"
 
 	firebase "firebase.google.com/go"
@@ -59,54 +58,6 @@ func (dbHandler DatabaseHandler) GetCountries() ([]CountryDto, error) {
 	return countries, nil
 }
 
-func (dbHandler DatabaseHandler) GetUser(userName string) (*User, error) {
-	ctx := context.Background()
-
-	client, err := dbHandler.app.Firestore(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	defer client.Close()
-
-	var user User
-
-	iter := client.Collection("user").Where("Name", "==", userName).Documents(ctx)
-	docs, err := iter.GetAll()
-	if err != nil {
-		return nil, err
-	}
-
-	if len(docs) == 0 {
-		return nil, errors.New("User not found")
-	}
-
-	err = docs[0].DataTo(&user)
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, err
-}
-
-func (dbHandler DatabaseHandler) SaveUser(user User) error {
-	ctx := context.Background()
-
-	client, err := dbHandler.app.Firestore(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer client.Close()
-
-	_, err = client.Collection("user").NewDoc().Set(ctx, user)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (dbHandler DatabaseHandler) SaveResult(result ResultDto) error {
 	ctx := context.Background()
 
@@ -135,12 +86,48 @@ func (dbHandler DatabaseHandler) SaveRanking(ranking RankingDto) error {
 
 	defer client.Close()
 
-	_, err = client.Collection("ranking").NewDoc().Set(ctx, ranking)
+	_, err = client.Collection("rankings").NewDoc().Set(ctx, ranking)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (dbHandler DatabaseHandler) GetRanking(user string) (*RankingDto, error) {
+	ctx := context.Background()
+
+	client, err := dbHandler.app.Firestore(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	defer client.Close()
+
+	docs, err := client.Collection("rankings").Where("Name", "==", user).Documents(ctx).GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(docs) == 0 {
+		countries, err := dbHandler.GetCountries()
+		if err != nil {
+			return nil, err
+		}
+
+		return &RankingDto{
+			user,
+			countries,
+		}, nil
+	}
+
+	var ranking RankingDto
+	err = docs[0].DataTo(&ranking)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ranking, nil
 }
 
 // only used for mapping with database.
@@ -175,9 +162,4 @@ type Ranking struct {
 type RankingDto struct {
 	Name    string
 	Ranking []CountryDto
-}
-
-type User struct {
-	Name string
-	Pass string
 }
