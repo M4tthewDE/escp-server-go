@@ -131,3 +131,22 @@ func (h Handler) GetRanking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (h Handler) HandleLock(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		h.SetLock(w, r)
+		return
+	}
+
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (h Handler) SetLock(w http.ResponseWriter, r *http.Request) {
+	err := h.dbHandler.SetLock()
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Could not set lock", http.StatusInternalServerError)
+
+		return
+	}
+}

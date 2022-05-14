@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
 	"google.golang.org/api/option"
 )
@@ -86,8 +87,24 @@ func (dbHandler DatabaseHandler) SaveRanking(ranking RankingDto) error {
 
 	defer client.Close()
 
-	_, err = client.Collection("rankings").NewDoc().Set(ctx, ranking)
+	docs, err := client.Collection("rankings").Where("Name", "==", ranking.Name).Documents(ctx).GetAll()
 	if err != nil {
+		return nil
+	}
+
+	if len(docs) == 0 {
+		_, err = client.Collection("rankings").NewDoc().Set(ctx, ranking)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	_, err = docs[0].Ref.Set(ctx, map[string]interface{}{
+		"Ranking": ranking.Ranking,
+	}, firestore.MergeAll)
+	if err != nil {
+		log.Println(err)
 		return err
 	}
 
@@ -128,6 +145,10 @@ func (dbHandler DatabaseHandler) GetRanking(user string) (*RankingDto, error) {
 	}
 
 	return &ranking, nil
+}
+
+func (dbHandler DatabaseHandler) SetLock() error {
+	return nil
 }
 
 // only used for mapping with database.
