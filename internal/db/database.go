@@ -175,6 +175,34 @@ func (dbHandler DatabaseHandler) GetLock() (bool, error) {
 	return lock.Lock, nil
 }
 
+func (dbHandler DatabaseHandler) GetDone() (bool, error) {
+	ctx := context.Background()
+
+	client, err := dbHandler.app.Firestore(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	defer client.Close()
+
+	docs, err := client.Collection("done").Documents(ctx).GetAll()
+	if err != nil {
+		return false, err
+	}
+
+	if len(docs) == 0 {
+		return false, err
+	}
+
+	var done Done
+	err = docs[0].DataTo(&done)
+	if err != nil {
+		return false, err
+	}
+
+	return done.Done, nil
+}
+
 // only used for mapping with database.
 type Country struct {
 	Name string
@@ -211,4 +239,8 @@ type RankingDto struct {
 
 type Lock struct {
 	Lock bool
+}
+
+type Done struct {
+	Done bool
 }

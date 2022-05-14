@@ -153,3 +153,24 @@ func (h Handler) GetLock(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintln(w, lock)
 }
+
+func (h Handler) HandleDone(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		h.GetDone(w, r)
+		return
+	}
+
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (h Handler) GetDone(w http.ResponseWriter, r *http.Request) {
+	lock, err := h.dbHandler.GetDone()
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Could not get done", http.StatusInternalServerError)
+
+		return
+	}
+
+	fmt.Fprintln(w, lock)
+}
