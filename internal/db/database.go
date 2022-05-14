@@ -148,6 +148,30 @@ func (dbHandler DatabaseHandler) GetRanking(user string) (*RankingDto, error) {
 }
 
 func (dbHandler DatabaseHandler) SetLock() error {
+	ctx := context.Background()
+
+	client, err := dbHandler.app.Firestore(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer client.Close()
+
+	docs, err := client.Collection("lock").Documents(ctx).GetAll()
+	if err != nil {
+		return nil
+	}
+
+	if len(docs) == 0 {
+		_, err = client.Collection("lock").NewDoc().Set(ctx, map[string]interface{}{
+			"lock": true,
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	return nil
 }
 
