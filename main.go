@@ -15,10 +15,10 @@ func main() {
 	handler := api.NewHandler()
 
 	http.HandleFunc("/countries", handler.GetCountries)
-	http.HandleFunc("/result", handler.SetResult)
 	http.HandleFunc("/ranking", handler.HandleRanking)
 	http.HandleFunc("/lock", handler.HandleLock)
 	http.HandleFunc("/done", handler.HandleDone)
+	http.HandleFunc("/result", handler.GetResult)
 
 	// Determine port for HTTP service.
 	port := os.Getenv("PORT")

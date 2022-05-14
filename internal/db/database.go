@@ -29,7 +29,7 @@ func NewDatabaseHandler() DatabaseHandler {
 	}
 }
 
-func (dbHandler DatabaseHandler) GetCountries() ([]CountryDto, error) {
+func (dbHandler DatabaseHandler) GetCountries() (*Countries, error) {
 	ctx := context.Background()
 
 	client, err := dbHandler.app.Firestore(ctx)
@@ -39,27 +39,23 @@ func (dbHandler DatabaseHandler) GetCountries() ([]CountryDto, error) {
 
 	defer client.Close()
 
-	countries := make([]CountryDto, 0)
-
 	docs, err := client.Collection("countries").Documents(ctx).GetAll()
 	if err != nil {
 		return nil, err
 	}
 
-	var country Country
+	var countries Countries
 	for _, doc := range docs {
-		err = doc.DataTo(&country)
+		err = doc.DataTo(&countries)
 		if err != nil {
 			return nil, err
 		}
-
-		countries = append(countries, CountryDto(country))
 	}
 
-	return countries, nil
+	return &countries, nil
 }
 
-func (dbHandler DatabaseHandler) SaveResult(result ResultDto) error {
+func (dbHandler DatabaseHandler) SaveResult(result Result) error {
 	ctx := context.Background()
 
 	client, err := dbHandler.app.Firestore(ctx)
@@ -77,7 +73,7 @@ func (dbHandler DatabaseHandler) SaveResult(result ResultDto) error {
 	return nil
 }
 
-func (dbHandler DatabaseHandler) SaveRanking(ranking RankingDto) error {
+func (dbHandler DatabaseHandler) SaveRanking(ranking Ranking) error {
 	ctx := context.Background()
 
 	client, err := dbHandler.app.Firestore(ctx)
@@ -111,7 +107,7 @@ func (dbHandler DatabaseHandler) SaveRanking(ranking RankingDto) error {
 	return nil
 }
 
-func (dbHandler DatabaseHandler) GetRanking(user string) (*RankingDto, error) {
+func (dbHandler DatabaseHandler) GetRanking(user string) (*Ranking, error) {
 	ctx := context.Background()
 
 	client, err := dbHandler.app.Firestore(ctx)
@@ -132,13 +128,13 @@ func (dbHandler DatabaseHandler) GetRanking(user string) (*RankingDto, error) {
 			return nil, err
 		}
 
-		return &RankingDto{
+		return &Ranking{
 			user,
-			countries,
+			countries.Countries,
 		}, nil
 	}
 
-	var ranking RankingDto
+	var ranking Ranking
 	err = docs[0].DataTo(&ranking)
 	if err != nil {
 		return nil, err
@@ -203,14 +199,11 @@ func (dbHandler DatabaseHandler) GetDone() (bool, error) {
 	return done.Done, nil
 }
 
-// only used for mapping with database.
-type Country struct {
-	Name string
-	Flag string
+type Countries struct {
+	Countries []Country
 }
 
-// use for transfer between database and application.
-type CountryDto struct {
+type Country struct {
 	Name string
 	Flag string
 }
@@ -220,21 +213,9 @@ type Result struct {
 	Result []Country
 }
 
-// use for transfer between database and application.
-type ResultDto struct {
-	Result []CountryDto
-}
-
-// only used for mapping with database.
 type Ranking struct {
 	Name    string
 	Ranking []Country
-}
-
-// use for transfer between database and application.
-type RankingDto struct {
-	Name    string
-	Ranking []CountryDto
 }
 
 type Lock struct {
